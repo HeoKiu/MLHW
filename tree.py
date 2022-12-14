@@ -233,7 +233,7 @@ class DecisionTree(BaseEstimator):
         return feature_index, threshold
         return feature_index, threshold
 
-    def make_tree(self, X_subset, y_subset):
+    def make_tree(self, X_subset, y_subset, depth = 0):
         """
         Recursively builds the tree
 
@@ -337,21 +337,20 @@ class DecisionTree(BaseEstimator):
 
         """
         assert self.classification, 'Available only for classification problem'
-
         y_predicted_probs = np.zeros((X.shape[0], self.n_classes))
-        indices_ = np.arange(X.shape[0])
-        q_ = queue.Queue()
-        q_.put((indices_, X, self.root))
-        while not q_.empty():
-            indices_subset, X_subset, node = q_.get()
-            if node.is_leaf:
-                y_predicted_probs[indices_subset] = node.y_values
-                continue
 
-            (X_l, y_l), (X_r, y_r) = self.make_split(node.feature_index, node.threshold,
-                                                     X_subset, indices_subset)
-            q_.put((y_l, X_l, node.left_child))
-            q_.put((y_r, X_r, node.right_child))
+        for i in range(X.shape[0]):
+            current_node = self.root
+
+            while type(current_node) is Node:
+                if X[i, current_node.feature_index] < current_node.value:
+                    current_node = current_node.left_child
+                else:
+                    current_node = current_node.right_child
+
+            y_predicted_probs[i] = current_node
 
         return y_predicted_probs
+
+
 
